@@ -16,3 +16,8 @@ font = "sans serif"
 [server]
 headless = true
 maxUploadSize = 25
+
+[client]
+# Hide the developer toolbar (Deploy button, developer menu items) so the local
+# app looks like the deployed one. Viewers keep the standard menu.
+toolbarMode = "viewer"
