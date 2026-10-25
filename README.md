@@ -6,7 +6,7 @@ An AI-assisted procurement application that reads supplier RFP responses (PDF), 
 
 **Stack:** Streamlit · SQLite · Python 3.10 · pypdf · Pydantic · OpenAI / Anthropic / OpenRouter (any JSON-capable LLM)
 
-**Live app:** `<paste your Streamlit Community Cloud URL here>`
+**Live app:** https://agentic-rfp-evaluator.streamlit.app/
 
 ---
 
