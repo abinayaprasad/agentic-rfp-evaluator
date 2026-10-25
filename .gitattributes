@@ -1,0 +1,7 @@
+# Normalise text line endings; never touch binaries
+* text=auto
+*.pdf binary
+*.png binary
+*.jpg binary
+*.db binary
+*.cmd text eol=crlf

@@ -1,0 +1,18 @@
+# Bristol Myers Squibb brand theme (core palette)
+#   BMS Purple  #BE2BBB  accent / primary actions
+#   White       #FFFFFF  main surface
+#   Light Gray  #F0EFEA  secondary surface (sidebar, panels)
+#   Dark Gray   #4F4A4A  body text
+# Font: sans-serif (Arial / Helvetica stack applied via CSS in app.py)
+
+[theme]
+base = "light"
+primaryColor = "#BE2BBB"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0EFEA"
+textColor = "#4F4A4A"
+font = "sans serif"
+
+[server]
+headless = true
+maxUploadSize = 25

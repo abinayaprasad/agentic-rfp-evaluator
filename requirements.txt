@@ -1,0 +1,20 @@
+# Application
+streamlit==1.39.0
+pandas==2.2.3
+
+# PDF reading and generation
+pypdf==5.1.0
+reportlab==4.2.5
+
+# Validation
+pydantic==2.9.2
+
+# LLM SDKs (either may be used; selected by LLM_PROVIDER secret)
+anthropic==2.3.0
+openai==3.37.0
+
+# Testing
+pytest==8.3.3
+
+# HTTP response decompression (httpx2 needs Brotli >= 1.2)
+Brotli>=1.2.0

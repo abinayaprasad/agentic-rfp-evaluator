@@ -1,0 +1,428 @@
+{
+  "rfp_run_id": "RFP-20261025-2D0435",
+  "created_at": "2026-10-25 15:13:25",
+  "status": "COMPLETED",
+  "llm_model": "gpt-4o-mini",
+  "criteria": [
+    {
+      "criterion_id": 1,
+      "name": "Technical Capability",
+      "description": "Study, site and country data model; named integrations with the eTMF, EDC and SAP finance systems; reporting dashboards; multi-country configuration; scalability to 40+ concurrent studies.",
+      "weight": 30.0,
+      "max_score": 10,
+      "is_active": 1,
+      "created_at": "2026-10-24 05:52:15",
+      "updated_at": "2026-10-24 05:52:15"
+    },
+    {
+      "criterion_id": 2,
+      "name": "Implementation Plan",
+      "description": "Migration waves and milestones; legacy data migration strategy; computer system validation (CSV) phases; user training; hypercare; risk register; realism of the 12-month timeline.",
+      "weight": 20.0,
+      "max_score": 10,
+      "is_active": 1,
+      "created_at": "2026-10-24 05:52:15",
+      "updated_at": "2026-10-24 05:52:15"
+    },
+    {
+      "criterion_id": 3,
+      "name": "Commercial Value",
+      "description": "Licence model (per study or per user); implementation fee; validation services fee; five-year total cost of ownership; clarity and completeness of pricing assumptions.",
+      "weight": 20.0,
+      "max_score": 10,
+      "is_active": 1,
+      "created_at": "2026-10-24 05:52:15",
+      "updated_at": "2026-10-24 05:52:15"
+    },
+    {
+      "criterion_id": 4,
+      "name": "Security & Compliance",
+      "description": "21 CFR Part 11 audit trail and electronic signatures; GxP validation package (IQ/OQ/PQ); GDPR and data residency; ISO 27001 or SOC 2; HIPAA; access control and auditability.",
+      "weight": 20.0,
+      "max_score": 10,
+      "is_active": 1,
+      "created_at": "2026-10-24 05:52:15",
+      "updated_at": "2026-10-24 05:52:15"
+    },
+    {
+      "criterion_id": 5,
+      "name": "Support & Experience",
+      "description": "Support model and SLA tiers; 24/7 coverage; hypercare duration; named pharma or CRO references; number of CTMS go-lives; regulatory inspection history.",
+      "weight": 10.0,
+      "max_score": 10,
+      "is_active": 1,
+      "created_at": "2026-10-24 05:52:15",
+      "updated_at": "2026-10-24 07:03:01"
+    }
+  ],
+  "benchmarks": {
+    "1": 9,
+    "2": 10,
+    "3": 9,
+    "4": 10,
+    "5": 9
+  },
+  "suppliers": [
+    {
+      "supplier_name": "NexaWorks",
+      "submission_date": "2026-10-03",
+      "experience_rating": 7.0,
+      "absolute_score": 94.0,
+      "ppi": 100.0,
+      "criteria": [
+        {
+          "criterion_id": 1,
+          "name": "Technical Capability",
+          "weight": 30.0,
+          "max_score": 10,
+          "score": 9,
+          "benchmark": 9,
+          "gap": 0,
+          "relative_pct": 100.0,
+          "justification": "Most technical capabilities are addressed with specific details, including named integrations and reporting features, but the scalability aspect could be more explicitly detailed.",
+          "evidence": "NexaCTMS provides study, country, site, subject and visit management... Integrations... eTMF: standard REST connector... EDC: standard connector... SAP: payment requests are transmitted via a standard file interface..."
+        },
+        {
+          "criterion_id": 2,
+          "name": "Implementation Plan",
+          "weight": 20.0,
+          "max_score": 10,
+          "score": 10,
+          "benchmark": 10,
+          "gap": 0,
+          "relative_pct": 100.0,
+          "justification": "The implementation plan is comprehensive, detailing migration waves, milestones, and a clear strategy for legacy data migration and user training.",
+          "evidence": "We propose four waves across 12 months... Legacy data is migrated by study cohort with automated reconciliation reports."
+        },
+        {
+          "criterion_id": 3,
+          "name": "Commercial Value",
+          "weight": 20.0,
+          "max_score": 10,
+          "score": 9,
+          "benchmark": 9,
+          "gap": 0,
+          "relative_pct": 100.0,
+          "justification": "The proposal provides a clear breakdown of costs and pricing assumptions, but could benefit from more detail on the five-year total cost of ownership.",
+          "evidence": "Licence is a platform fee covering up to 50 active studies and unlimited users... Total $3,200,000."
+        },
+        {
+          "criterion_id": 4,
+          "name": "Security & Compliance",
+          "weight": 20.0,
+          "max_score": 10,
+          "score": 10,
+          "benchmark": 10,
+          "gap": 0,
+          "relative_pct": 100.0,
+          "justification": "All security and compliance requirements are thoroughly addressed with specific certifications and compliance measures.",
+          "evidence": "21 CFR Part 11 and EU Annex 11 compliant audit trail and electronic signatures... ISO 27001:2022 certified... GDPR: hosting available in the EU or US."
+        },
+        {
+          "criterion_id": 5,
+          "name": "Support & Experience",
+          "weight": 10.0,
+          "max_score": 10,
+          "score": 9,
+          "benchmark": 9,
+          "gap": 0,
+          "relative_pct": 100.0,
+          "justification": "The support model is well-defined with specific SLAs and hypercare duration, but could include more named references for added credibility.",
+          "evidence": "Support (Gold tier included)... Eight weeks of hypercare after each scale wave with a named customer success manager."
+        }
+      ],
+      "risks": [
+        "Potential gaps in scalability details may affect future growth.",
+        "Assumptions regarding the sponsor's SAP team could lead to integration delays."
+      ],
+      "overall_summary": "NexaWorks presents a strong proposal for a cloud-based CTMS with a detailed implementation plan and robust security measures. While most criteria are well addressed, minor gaps in scalability and reference details could be improved.",
+      "warnings": [],
+      "final_rank": 1,
+      "tie_break_reason": "Ranked first on PPI 100.00",
+      "document": {
+        "page_count": 3,
+        "char_count": 6841,
+        "filename": "nexaworks.pdf",
+        "chunk_count": 10
+      },
+      "llm": {
+        "attempts": 1,
+        "model": "gpt-4o-mini",
+        "error": null
+      }
+    },
+    {
+      "supplier_name": "Apex Systems",
+      "submission_date": "2026-10-01",
+      "experience_rating": 8.5,
+      "absolute_score": 90.0,
+      "ppi": 96.0,
+      "criteria": [
+        {
+          "criterion_id": 1,
+          "name": "Technical Capability",
+          "weight": 30.0,
+          "max_score": 10,
+          "score": 9,
+          "benchmark": 9,
+          "gap": 0,
+          "relative_pct": 100.0,
+          "justification": "The proposal addresses most technical capabilities with specific details on integrations and reporting, but lacks explicit mention of scalability to 40+ concurrent studies.",
+          "evidence": "ApexTrial is a multi-tenant SaaS CTMS with a hierarchical data model of Program, Study, Country, Site and Subject."
+        },
+        {
+          "criterion_id": 2,
+          "name": "Implementation Plan",
+          "weight": 20.0,
+          "max_score": 10,
+          "score": 8,
+          "benchmark": 10,
+          "gap": -2,
+          "relative_pct": 80.0,
+          "justification": "The implementation plan is detailed with migration waves and milestones, but the timeline exceeds the sponsor's request by two months, which is a minor gap.",
+          "evidence": "We propose a three-wave migration over 14 months."
+        },
+        {
+          "criterion_id": 3,
+          "name": "Commercial Value",
+          "weight": 20.0,
+          "max_score": 10,
+          "score": 9,
+          "benchmark": 9,
+          "gap": 0,
+          "relative_pct": 100.0,
+          "justification": "The proposal provides a clear licensing model and detailed pricing assumptions, but the implementation fee could be more explicitly broken down.",
+          "evidence": "Licence is per active study per year, which scales with the sponsor's portfolio rather than headcount."
+        },
+        {
+          "criterion_id": 4,
+          "name": "Security & Compliance",
+          "weight": 20.0,
+          "max_score": 10,
+          "score": 10,
+          "benchmark": 10,
+          "gap": 0,
+          "relative_pct": 100.0,
+          "justification": "All security and compliance requirements are thoroughly addressed with specific details on regulations and certifications.",
+          "evidence": "ISO 27001:2022 certified (fictional certificate AX-27001-2024-118) and SOC 2 Type II report issued annually."
+        },
+        {
+          "criterion_id": 5,
+          "name": "Support & Experience",
+          "weight": 10.0,
+          "max_score": 10,
+          "score": 9,
+          "benchmark": 9,
+          "gap": 0,
+          "relative_pct": 100.0,
+          "justification": "The support model is well-defined with specific SLAs and named references, but could benefit from more detail on the number of CTMS go-lives.",
+          "evidence": "Hypercare of 10 weeks after each wave with a named support lead on site two days per week."
+        }
+      ],
+      "risks": [
+        "The proposed timeline exceeds the sponsor's 12-month target by two months, which may impact project urgency.",
+        "Potential data quality issues during legacy data migration could pose risks to the project.",
+        "Dependency on sponsor's timely provision of API credentials and SAP development client could delay implementation."
+      ],
+      "overall_summary": "Apex Systems presents a strong proposal for a validated cloud-based CTMS with comprehensive technical capabilities and compliance measures. While there are minor gaps in the implementation timeline and detail, the overall fit for the sponsor's needs is promising.",
+      "warnings": [],
+      "final_rank": 2,
+      "tie_break_reason": "Rule 1 (PPI): NexaWorks 100.00 vs Apex Systems 96.00",
+      "document": {
+        "page_count": 3,
+        "char_count": 7671,
+        "filename": "apex_systems.pdf",
+        "chunk_count": 11
+      },
+      "llm": {
+        "attempts": 1,
+        "model": "gpt-4o-mini",
+        "error": null
+      }
+    },
+    {
+      "supplier_name": "Orbit Digital",
+      "submission_date": "2026-10-03",
+      "experience_rating": 9.0,
+      "absolute_score": 85.0,
+      "ppi": 90.6667,
+      "criteria": [
+        {
+          "criterion_id": 1,
+          "name": "Technical Capability",
+          "weight": 30.0,
+          "max_score": 10,
+          "score": 8,
+          "benchmark": 9,
+          "gap": -1,
+          "relative_pct": 88.8889,
+          "justification": "Most technical capabilities are addressed, including integrations and reporting, but specific details on scalability and multi-country configuration are lacking.",
+          "evidence": "OrbitTrials provides comprehensive study, site, subject, monitoring and payment management with configurable workflows."
+        },
+        {
+          "criterion_id": 2,
+          "name": "Implementation Plan",
+          "weight": 20.0,
+          "max_score": 10,
+          "score": 8,
+          "benchmark": 10,
+          "gap": -2,
+          "relative_pct": 80.0,
+          "justification": "The implementation plan outlines migration waves and milestones clearly, but the timeline is slightly longer than the requested 12 months.",
+          "evidence": "We propose two waves over 13 months."
+        },
+        {
+          "criterion_id": 3,
+          "name": "Commercial Value",
+          "weight": 20.0,
+          "max_score": 10,
+          "score": 9,
+          "benchmark": 9,
+          "gap": 0,
+          "relative_pct": 100.0,
+          "justification": "The proposal provides a detailed breakdown of costs and pricing assumptions, with only minor details missing.",
+          "evidence": "Licence is per active study per year."
+        },
+        {
+          "criterion_id": 4,
+          "name": "Security & Compliance",
+          "weight": 20.0,
+          "max_score": 10,
+          "score": 9,
+          "benchmark": 10,
+          "gap": -1,
+          "relative_pct": 90.0,
+          "justification": "The proposal addresses key compliance requirements and security measures, but lacks specific details on HIPAA compliance.",
+          "evidence": "OrbitTrials has supported regulated clinical operations for ten years and is built to meet applicable regulatory requirements including 21 CFR Part 11."
+        },
+        {
+          "criterion_id": 5,
+          "name": "Support & Experience",
+          "weight": 10.0,
+          "max_score": 10,
+          "score": 9,
+          "benchmark": 9,
+          "gap": 0,
+          "relative_pct": 100.0,
+          "justification": "The support model is well-defined with 24/7 coverage and hypercare, but lacks specific details on the number of CTMS go-lives.",
+          "evidence": "24x7 support for P1 incidents with a one-hour response target."
+        }
+      ],
+      "risks": [
+        "Integration complexity - mitigated by our standard connector library and prior experience.",
+        "Sponsor data readiness - mitigated by our proven migration templates."
+      ],
+      "overall_summary": "Orbit Digital presents a strong proposal for a cloud-based CTMS with a solid implementation plan and comprehensive support. While there are minor gaps in specific details, the overall offering aligns well with the sponsor's requirements.",
+      "warnings": [],
+      "final_rank": 3,
+      "tie_break_reason": "Rule 1 (PPI): Apex Systems 96.00 vs Orbit Digital 90.67",
+      "document": {
+        "page_count": 3,
+        "char_count": 5517,
+        "filename": "orbit_digital.pdf",
+        "chunk_count": 8
+      },
+      "llm": {
+        "attempts": 1,
+        "model": "gpt-4o-mini",
+        "error": null
+      }
+    },
+    {
+      "supplier_name": "BrightPath Tech",
+      "submission_date": "2026-09-28",
+      "experience_rating": 5.0,
+      "absolute_score": 65.0,
+      "ppi": 69.3334,
+      "criteria": [
+        {
+          "criterion_id": 1,
+          "name": "Technical Capability",
+          "weight": 30.0,
+          "max_score": 10,
+          "score": 6,
+          "benchmark": 9,
+          "gap": -3,
+          "relative_pct": 66.6667,
+          "justification": "The proposal mentions integrations with major eTMF, EDC, and ERP systems but lacks specific names and details about the data model and scalability for 40+ studies.",
+          "evidence": "BrightTrial integrates with all major eTMF, EDC and ERP systems through our flexible integration layer."
+        },
+        {
+          "criterion_id": 2,
+          "name": "Implementation Plan",
+          "weight": 20.0,
+          "max_score": 10,
+          "score": 7,
+          "benchmark": 10,
+          "gap": -3,
+          "relative_pct": 70.0,
+          "justification": "The implementation plan outlines a timeline and phases but lacks detail on the legacy data migration strategy and risk register.",
+          "evidence": "We propose a single go-live (big-bang) approach over seven months."
+        },
+        {
+          "criterion_id": 3,
+          "name": "Commercial Value",
+          "weight": 20.0,
+          "max_score": 10,
+          "score": 8,
+          "benchmark": 9,
+          "gap": -1,
+          "relative_pct": 88.8889,
+          "justification": "The pricing model is clear and detailed, but the validation services fee is mentioned as excluded, which is a minor gap.",
+          "evidence": "Licence is per named user per year."
+        },
+        {
+          "criterion_id": 4,
+          "name": "Security & Compliance",
+          "weight": 20.0,
+          "max_score": 10,
+          "score": 6,
+          "benchmark": 10,
+          "gap": -4,
+          "relative_pct": 60.0,
+          "justification": "The proposal addresses several compliance aspects but lacks specific details on GxP validation and ISO 27001 certification.",
+          "evidence": "The platform is designed with regulatory requirements in mind."
+        },
+        {
+          "criterion_id": 5,
+          "name": "Support & Experience",
+          "weight": 10.0,
+          "max_score": 10,
+          "score": 5,
+          "benchmark": 9,
+          "gap": -4,
+          "relative_pct": 55.5556,
+          "justification": "The support model is described but lacks detail on SLA tiers and the number of CTMS go-lives.",
+          "evidence": "Support is provided by email and web portal during business hours."
+        }
+      ],
+      "risks": [
+        "The main risk is sponsor availability for workshops and UAT."
+      ],
+      "overall_summary": "BrightPath Tech offers a cloud-based CTMS with a clear implementation plan and pricing structure. However, the proposal lacks some specific details required for a comprehensive evaluation, particularly in technical capability and compliance.",
+      "warnings": [],
+      "final_rank": 4,
+      "tie_break_reason": "Rule 1 (PPI): Orbit Digital 90.67 vs BrightPath Tech 69.33",
+      "document": {
+        "page_count": 2,
+        "char_count": 5044,
+        "filename": "brightpath_tech.pdf",
+        "chunk_count": 6
+      },
+      "llm": {
+        "attempts": 1,
+        "model": "gpt-4o-mini",
+        "error": null
+      }
+    }
+  ],
+  "tie_break_explanation": [
+    "#1 NexaWorks: Ranked first on PPI 100.00",
+    "#2 Apex Systems: Rule 1 (PPI): NexaWorks 100.00 vs Apex Systems 96.00",
+    "#3 Orbit Digital: Rule 1 (PPI): Apex Systems 96.00 vs Orbit Digital 90.67",
+    "#4 BrightPath Tech: Rule 1 (PPI): Orbit Digital 90.67 vs BrightPath Tech 69.33"
+  ],
+  "run_warnings": [],
+  "workflow_log": [],
+  "error_message": null
+}

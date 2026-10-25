@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Secrets
+.streamlit/secrets.toml
+.env
+
+# Local database (recreated by db/seed.py on startup)
+data/*.db
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Local tooling
+.claude/
+
+# Course material (not part of the submission)
+Agentic_RFP_Evaluation_Mini_Project.pdf
