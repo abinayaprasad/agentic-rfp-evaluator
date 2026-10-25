@@ -74,42 +74,62 @@ A procurement team receives several supplier proposals (RFP responses) as PDFs. 
 
 ```mermaid
 flowchart TB
-    subgraph UI["Streamlit UI (app.py)"]
-        C[Criteria screen]
-        I[Supplier input screen]
-        L[Leaderboard]
-        S[Detailed scorecard]
-        R[Run details + JSON download]
+    H((Human reviewer))
+
+    subgraph UI["Streamlit UI (app.py) - 7 tabs"]
+        C[1 Criteria]
+        I[2 Supplier Input]
+        L[3 Leaderboard<br/>LLM ranking + adjusted ranking]
+        S[4 Detailed Scorecard<br/>+ score adjustments]
+        R[5 Run Details<br/>human review + JSON export]
+        Q[6 Ask the Proposals]
+        X[7 Decision<br/>award + override capture]
     end
 
     subgraph ORCH["Orchestrator Agent (agents/orchestrator.py)"]
         O[run_evaluation_batch]
+        AH[attach_human_review]
     end
 
-    subgraph TOOLS["Tools"]
-        D[Document Tool<br/>tools/document_tool.py<br/>pypdf text extraction]
-        E[Evaluation Agent<br/>agents/evaluator.py<br/>prompt build + LLM call]
-        V[Validation Tool<br/>tools/validation_tool.py<br/>Pydantic schema + normalise]
-        K[Ranking Tool<br/>tools/ranking_tool.py<br/>deterministic formulas]
+    subgraph AGENTS["LLM agents"]
+        E[Evaluation Agent<br/>agents/evaluator.py<br/>prompt + anchors, LLM call, retry]
+        QA[Q&A Agent<br/>agents/qa_agent.py<br/>retrieve, cite, answer]
     end
 
-    subgraph DATA["Persistence"]
-        DB[(SQLite<br/>evaluation_criteria<br/>rfp_runs<br/>supplier_results)]
+    subgraph TOOLS["Deterministic tools (no LLM)"]
+        D[Document Tool<br/>pypdf text extraction]
+        V[Validation Tool<br/>Pydantic schema + normalisation]
+        K[Ranking Tool<br/>formulas, benchmarks, PPI, tie-breaks]
+        RT[Retrieval Tool<br/>chunking + BM25 index]
+        RV[Review Tool<br/>adjustments, re-rank, decision rules]
     end
 
-    LLM[["External LLM API<br/>JSON output, temperature 0"]]
+    DB[(SQLite<br/>evaluation_criteria · rfp_runs<br/>supplier_results · proposal_chunks<br/>score_adjustments · award_decisions)]
+    LLM[["LLM API<br/>OpenAI / OpenRouter / Anthropic / mock"]]
 
-    I -->|PDFs + metadata| O
+    H --> I & S & X & Q
     C <-->|read / update criteria| DB
-    O -->|1. extract| D
-    O -->|2. score| E
+    I -->|PDFs + metadata| O
+    O -->|1 extract| D
+    D -->|text| RT
+    O -->|2 score| E
     E <-->|prompt / JSON| LLM
-    O -->|3. validate| V
-    O -->|4. score, benchmark, rank| K
-    O -->|5. persist run| DB
-    O -->|result dict| L
-    O --> S
-    O --> R
+    O -->|3 validate| V
+    O -->|4 score, benchmark, rank| K
+    O -->|5 persist results + chunks| DB
+    O -->|result dict| L & S & R
+
+    Q -->|question| QA
+    QA -->|BM25 search| RT
+    RT <-->|chunks| DB
+    QA <-->|passages / cited answer| LLM
+
+    S -->|adjustment + reason| DB
+    X -->|decision + override reason| DB
+    AH -->|adjustments, decisions| DB
+    AH -->|re-rank| RV
+    RV --> K
+    AH -->|human_review view| L & R & X
 ```
 
 ### 3.2 Ten-Step Data Flow
@@ -123,40 +143,55 @@ flowchart LR
     E --> F[6 Score<br/>absolute weighted score]
     F --> G[7 Benchmark<br/>best per criterion, gaps, relative %]
     G --> H[8 Rank<br/>PPI, tie-breaks, ranks]
-    H --> I[9 Persist<br/>write to SQLite]
+    H --> I[9 Persist<br/>results + text chunks to SQLite]
     I --> J[10 Present<br/>leaderboard, scorecards, JSON]
+    J --> K[11 Ask<br/>BM25 retrieval + cited answer]
+    J --> L[12 Review<br/>reviewer adjusts scores, re-rank]
+    L --> M[13 Decide<br/>award; override needs reason; versioned]
 ```
+
+Steps 1-10 are the brief's required pipeline. Steps 11-13 are the additions: retrieval-augmented Q&A and the human-in-the-loop review, both recorded beside the LLM results without changing them.
 
 ### 3.3 ASCII Fallback (for viewers without Mermaid)
 
 ```
-+---------------------------------------------------------------------+
-|                        STREAMLIT UI  (app.py)                        |
-|  Criteria | Supplier Input | Leaderboard | Scorecard | Run Details   |
-+-------------------------------+-------------------------------------+
-                                | PDFs + metadata
-                                v
-+---------------------------------------------------------------------+
-|              ORCHESTRATOR AGENT  (agents/orchestrator.py)            |
-|   create run id -> for each supplier: extract -> evaluate ->         |
-|   validate -> then score -> benchmark -> rank -> persist -> return   |
-+----+-----------------+------------------+-----------------+---------+
-     |                 |                  |                 |
-     v                 v                  v                 v
-+-----------+   +-------------+    +-------------+   +-------------+
-| Document  |   | Evaluation  |    | Validation  |   | Ranking     |
-| Tool      |   | Agent       |    | Tool        |   | Tool        |
-| pypdf     |   | prompt +    |    | Pydantic +  |   | pure Python |
-|           |   | LLM call    |    | normalise   |   | formulas    |
-+-----------+   +------+------+    +-------------+   +-------------+
-                       |
-                       v
-                +-------------+          +--------------------------+
-                | LLM API     |          | SQLite                   |
-                | JSON only   |          | evaluation_criteria      |
-                | temp = 0    |          | rfp_runs                 |
-                +-------------+          | supplier_results         |
-                                         +--------------------------+
+                              (Human reviewer)
+                                      |
++-----------------------------------------------------------------------------------+
+|                           STREAMLIT UI  (app.py) - 7 tabs                         |
+| 1 Criteria | 2 Supplier Input | 3 Leaderboard | 4 Scorecard | 5 Run Details       |
+|            |                  |  LLM + adjusted |  + adjust  |  review + export    |
+| 6 Ask the Proposals (RAG)     | 7 Decision (award, override reason, versions)     |
++--------------------+-----------------------------+------------------+-------------+
+                     | PDFs + metadata             | question         | adjustments /
+                     v                             v                  | decisions
++----------------------------------------+   +-----------------+      v
+| ORCHESTRATOR AGENT (agents/orchestrator)|   | Q&A AGENT       |  +-----------------+
+| run_evaluation_batch:                   |   | agents/qa_agent |  | REVIEW TOOL     |
+|  run id -> per supplier: extract ->     |   | retrieve ->     |  | tools/review    |
+|  chunk -> evaluate -> validate ->       |   | prompt -> cite  |  | validate adjust |
+|  score -> benchmark -> rank -> persist  |   +--------+--------+  | / decision,     |
+| attach_human_review: adjustments +      |            |           | re-rank via     |
+|  decisions -> adjusted view for UI/JSON |            |           | Ranking Tool    |
++----+-----------+-----------+------------+            |           +--------+--------+
+     |           |           |          |              |                    |
+     v           v           v          v              v                    v
++----------+ +----------+ +----------+ +----------+ +------------+   +----------+
+| Document | | Evaluat. | | Validat. | | Ranking  | | Retrieval  |   | Ranking  |
+| Tool     | | Agent    | | Tool     | | Tool     | | Tool       |   | Tool     |
+| pypdf    | | prompt + | | Pydantic | | formulas | | chunk +    |   | (reused) |
+|          | | anchors, | | normalise| | PPI, tie | | BM25       |   +----------+
+|          | | LLM call | |          | | -breaks  | +------------+
++----------+ +----+-----+ +----------+ +----------+
+                  |
+                  v
+          +---------------+        +------------------------------------------+
+          | LLM API       |        | SQLite                                   |
+          | OpenAI /      |        | evaluation_criteria  rfp_runs            |
+          | OpenRouter /  |        | supplier_results     proposal_chunks     |
+          | Anthropic /   |        | score_adjustments    award_decisions     |
+          | mock          |        +------------------------------------------+
+          +---------------+
 ```
 
 ### 3.4 Separation of Responsibilities
@@ -166,7 +201,11 @@ flowchart LR
 | LLM (Evaluation Agent) | Read proposal text, assign a 0–10 score per criterion, write justification, quote evidence, list risks | Compute weighted totals, compare suppliers, break ties, assign ranks |
 | Validation Tool | Enforce schema, fill missing criteria, clip ranges, record warnings | Change a valid score |
 | Ranking Tool | All arithmetic, benchmarks, PPI, sorting, rank assignment | Call the LLM |
-| Orchestrator | Sequence tools, handle per-supplier failures, log steps | Contain formula logic |
+| Orchestrator | Sequence tools, handle per-supplier failures, log steps; compose the human-review view | Contain formula logic |
+| Retrieval Tool | Chunk proposal text; BM25 search for Q&A | Influence scores or ranks |
+| Q&A Agent (LLM) | Answer a question from retrieved passages, citing suppliers | Use outside knowledge; change any score |
+| Review Tool | Validate reviewer adjustments and decisions; re-rank via the Ranking Tool | Overwrite an LLM score; accept an override without a reason |
+| Human reviewer | Adjust scores with reasons; record the award decision | Act anonymously; override without category and justification |
 
 ---
 
@@ -184,13 +223,16 @@ rfp-evaluator/
 │   └── secrets.toml.example      # LLM_API_KEY placeholder (never commit real key)
 ├── agents/
 │   ├── __init__.py
-│   ├── orchestrator.py           # run_evaluation_batch()
-│   └── evaluator.py              # build_prompt(), evaluate_supplier()
+│   ├── orchestrator.py           # run_evaluation_batch(), load_run_result(), attach_human_review()
+│   ├── evaluator.py              # build_prompt(), evaluate_supplier(), provider clients
+│   └── qa_agent.py               # answer_question() - retrieval-augmented Q&A
 ├── tools/
 │   ├── __init__.py
 │   ├── document_tool.py          # extract_text()
 │   ├── validation_tool.py        # Pydantic models, validate_and_normalise()
-│   └── ranking_tool.py           # compute_absolute_scores(), benchmark(), rank()
+│   ├── ranking_tool.py           # score_and_rank(), rank_suppliers(), explain_tie_breaks()
+│   ├── retrieval_tool.py         # chunk_text(), BM25Index
+│   └── review_tool.py            # apply_adjustments(), validate_adjustment(), validate_decision()
 ├── db/
 │   ├── __init__.py
 │   ├── schema.sql                # CREATE TABLE statements
@@ -208,11 +250,18 @@ rfp-evaluator/
 ├── scripts/
 │   └── generate_rfps.py          # reportlab script that builds the synthetic PDFs
 ├── tests/
-│   ├── test_validation.py
-│   ├── test_ranking.py
-│   └── test_document_tool.py
+│   ├── conftest.py               # shared criteria fixture
+│   ├── test_document_tool.py
+│   ├── test_validation_tool.py
+│   ├── test_ranking_tool.py
+│   ├── test_evaluator.py
+│   ├── test_orchestrator.py
+│   ├── test_retrieval_tool.py
+│   ├── test_qa_agent.py
+│   └── test_review_tool.py
 └── docs/
-    └── screenshots/              # for README
+    ├── rfp_response_template.md  # fill-in proposal template
+    └── screenshots/              # 8 UI screenshots for README
 ```
 
 ---
@@ -254,6 +303,48 @@ CREATE TABLE IF NOT EXISTS supplier_results (
     result_json       TEXT    NOT NULL,             -- full per-criterion detail
     UNIQUE (rfp_run_id, supplier_name)
 );
+
+-- Added for the Ask the Proposals (RAG) feature
+CREATE TABLE IF NOT EXISTS proposal_chunks (
+    chunk_pk       INTEGER PRIMARY KEY AUTOINCREMENT,
+    rfp_run_id     TEXT    NOT NULL REFERENCES rfp_runs(rfp_run_id) ON DELETE CASCADE,
+    supplier_name  TEXT    NOT NULL,
+    chunk_id       INTEGER NOT NULL,
+    text           TEXT    NOT NULL,
+    char_start     INTEGER NOT NULL DEFAULT 0,
+    UNIQUE (rfp_run_id, supplier_name, chunk_id)
+);
+
+-- Added for human-in-the-loop review: one current adjustment per run/supplier/criterion
+CREATE TABLE IF NOT EXISTS score_adjustments (
+    adjustment_id   INTEGER PRIMARY KEY AUTOINCREMENT,
+    rfp_run_id      TEXT    NOT NULL REFERENCES rfp_runs(rfp_run_id) ON DELETE CASCADE,
+    supplier_name   TEXT    NOT NULL,
+    criterion_id    INTEGER NOT NULL,
+    original_score  INTEGER NOT NULL,
+    adjusted_score  INTEGER NOT NULL,
+    reason          TEXT    NOT NULL,
+    reviewer        TEXT    NOT NULL,
+    created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (rfp_run_id, supplier_name, criterion_id)
+);
+
+-- Versioned award decisions; is_override = 1 when selected != recommended
+CREATE TABLE IF NOT EXISTS award_decisions (
+    decision_id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    rfp_run_id           TEXT    NOT NULL REFERENCES rfp_runs(rfp_run_id) ON DELETE CASCADE,
+    version              INTEGER NOT NULL,
+    basis                TEXT    NOT NULL CHECK (basis IN ('llm', 'adjusted')),
+    recommended_supplier TEXT    NOT NULL,
+    selected_supplier    TEXT    NOT NULL,
+    is_override          INTEGER NOT NULL CHECK (is_override IN (0, 1)),
+    reason_category      TEXT,
+    reason_text          TEXT,
+    reviewer             TEXT    NOT NULL,
+    decided_at           TEXT    NOT NULL DEFAULT (datetime('now')),
+    adjustments_json     TEXT    NOT NULL DEFAULT '[]',
+    UNIQUE (rfp_run_id, version)
+);
 ```
 
 **Why `criteria_json` on `rfp_runs`:** criteria can change later. Storing a snapshot makes every past run reproducible and explainable.
@@ -272,6 +363,9 @@ CREATE TABLE IF NOT EXISTS supplier_results (
 | `complete_run(run_id, warnings)` | Sets status COMPLETED |
 | `fail_run(run_id, error)` | Sets status FAILED |
 | `get_run(run_id)` / `list_runs()` | For run history |
+| `save_chunks(run_id, chunks)` / `get_chunks(run_id)` / `count_chunks(run_id)` | Retrieval chunks for Ask the Proposals |
+| `save_adjustment(...)` / `delete_adjustment(...)` / `get_adjustments(run_id)` | Reviewer score adjustments (upsert per run/supplier/criterion) |
+| `save_decision(...)` / `get_latest_decision(run_id)` / `get_decision_history(run_id)` | Versioned award decisions |
 
 ---
 
@@ -543,7 +637,11 @@ Implement as `st.tabs` in `app.py`. Keep state in `st.session_state["last_run"]`
 | **Supplier Input** | File uploader (multiple PDFs); per file: supplier name, submission date, experience rating 0–10; validation messages (duplicate names, missing fields, weights ≠ 100); Evaluate button with progress bar | `st.file_uploader(accept_multiple_files=True)`, `st.text_input`, `st.date_input`, `st.slider` |
 | **Leaderboard** | Table: Rank, Supplier, Absolute Score, PPI, Submission Date, Experience Rating; bar chart of PPI | `st.dataframe`, `st.bar_chart` |
 | **Detailed Scorecard** | Supplier selector; per-criterion table: Score, Benchmark, Gap, Relative %, Weight, Evidence, Justification; risks; overall summary; supplier warnings | `st.selectbox`, `st.dataframe`, `st.expander` |
-| **Run Details** | RFP_RUN_ID, created time, model, criteria snapshot, run-level warnings, tie-break explanation list, JSON download button; history of previous runs | `st.code`, `st.download_button`, `st.selectbox` for past runs |
+| **Run Details** | RFP_RUN_ID, created time, model, criteria snapshot, run-level warnings, tie-break explanation list, human review summary and decision history, JSON download (includes `human_review`) | chips, `st.download_button`, `st.expander` |
+| **Ask the Proposals** | Question box, passage count, optional supplier filter, example questions; cited answer plus the retrieved passages with BM25 scores | `st.text_input`, `st.slider`, `st.multiselect`, `st.expander` |
+| **Decision** | Recommended supplier (rank 1 after adjustments), adjusted ranking table, winner radio, override category + justification, current decision and version history | `st.form`, `st.radio`, `st.selectbox`, `st.text_area` |
+
+Cross-cutting: a **Reviewer** name field in the sidebar gates every adjustment and decision; the **Detailed Scorecard** gains a "Human score review" form and a list of current adjustments; the **Leaderboard** shows a second "Human-adjusted ranking" table when adjustments exist.
 
 ---
 
@@ -631,9 +729,16 @@ Steps 3, 7, 8 and 10 carry 60 of the 100 marks. Get them correct and tested befo
 
 | Test file | Cases |
 |---|---|
-| `test_validation.py` | Missing criterion filled; unknown criterion dropped; duplicate kept once; score 15 clipped to 10; score −3 clipped to 0; score "high" set to 0; empty evidence filled; supplier name overridden |
-| `test_ranking.py` | Worked example values from section 7.3; benchmark zero handling; PPI tie broken by date; date tie broken by rating; rating tie broken by name; ranks are 1..N with no gaps; sorting is stable and repeatable |
+| `test_validation_tool.py` | Missing criterion filled; unknown criterion dropped; duplicate kept once; score 15 clipped to 10; score −3 clipped to 0; score "high" set to 0; empty evidence filled; supplier name overridden |
+| `test_ranking_tool.py` | Worked example values from section 7.3; benchmark zero handling; PPI tie broken by date; date tie broken by rating; rating tie broken by name; ranks are 1..N with no gaps; sorting is stable and repeatable |
 | `test_document_tool.py` | Four sample PDFs extract > 200 chars; `broken_empty.pdf` triggers `PDF_TEXT_TOO_SHORT`; non-PDF bytes raise `DocumentExtractionError` |
+| `test_evaluator.py` | Prompt built from DB criteria with scoring anchors; JSON parsing; retry on malformed JSON; provider factory; OpenAI temperature 0 + seed and the rejection fallback |
+| `test_orchestrator.py` | Full pipeline on the sample PDFs with the mock LLM; persistence; criteria snapshot; per-supplier failure isolation; FAILED status on unexpected error |
+| `test_retrieval_tool.py` | Tokenisation; chunk coverage and overlap; long-paragraph splitting; BM25 ranking, filter, determinism; sample-PDF retrieval |
+| `test_qa_agent.py` | Q&A prompt shape; retrieval; supplier filter; empty / no-match / model-failure paths; chunk persistence; cascade delete |
+| `test_review_tool.py` | Adjustment validation; re-rank with traceability fields; decision rules (override needs category + justification); versioned persistence; `attach_human_review` export shape |
+
+Current total: **136 tests**.
 
 Manual tests in the UI: weights not summing to 100 blocks Evaluate; duplicate supplier names blocked; missing date blocked; LLM key missing shows a clear error.
 
