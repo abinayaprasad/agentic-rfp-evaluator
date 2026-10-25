@@ -85,38 +85,65 @@ To try the app without any API key, set `LLM_PROVIDER = "mock"` in `secrets.toml
 
 ```mermaid
 flowchart TB
-    subgraph UI["Streamlit UI (app.py)"]
-        C[Criteria]
-        I[Supplier Input]
-        L[Leaderboard]
-        S[Detailed Scorecard]
-        R[Run Details + JSON download]
+    H((Human reviewer))
+
+    subgraph UI["Streamlit UI (app.py) - 7 tabs"]
+        C[1 Criteria]
+        I[2 Supplier Input]
+        L[3 Leaderboard<br/>LLM ranking + adjusted ranking]
+        S[4 Detailed Scorecard<br/>+ score adjustments]
+        R[5 Run Details<br/>human review + JSON export]
+        Q[6 Ask the Proposals]
+        X[7 Decision<br/>award + override capture]
     end
 
     subgraph ORCH["Orchestrator Agent (agents/orchestrator.py)"]
         O[run_evaluation_batch]
+        AH[attach_human_review]
     end
 
-    subgraph TOOLS["Tools"]
-        D[Document Tool<br/>tools/document_tool.py<br/>pypdf text extraction]
-        E[Evaluation Agent<br/>agents/evaluator.py<br/>prompt build + LLM call + retry]
-        V[Validation Tool<br/>tools/validation_tool.py<br/>Pydantic schema + normalisation]
-        K[Ranking Tool<br/>tools/ranking_tool.py<br/>deterministic formulas]
+    subgraph AGENTS["LLM agents"]
+        E[Evaluation Agent<br/>agents/evaluator.py<br/>prompt + anchors, LLM call, retry]
+        QA[Q&A Agent<br/>agents/qa_agent.py<br/>retrieve, cite, answer]
     end
 
-    DB[(SQLite<br/>evaluation_criteria<br/>rfp_runs<br/>supplier_results)]
-    LLM[["LLM API<br/>JSON output"]]
+    subgraph TOOLS["Deterministic tools (no LLM)"]
+        D[Document Tool<br/>pypdf text extraction]
+        V[Validation Tool<br/>Pydantic schema + normalisation]
+        K[Ranking Tool<br/>formulas, benchmarks, PPI, tie-breaks]
+        RT[Retrieval Tool<br/>chunking + BM25 index]
+        RV[Review Tool<br/>adjustments, re-rank, decision rules]
+    end
 
-    I -->|PDFs + metadata| O
+    DB[(SQLite<br/>evaluation_criteria · rfp_runs<br/>supplier_results · proposal_chunks<br/>score_adjustments · award_decisions)]
+    LLM[["LLM API<br/>OpenAI / OpenRouter / Anthropic / mock"]]
+
+    H --> I & S & X & Q
     C <-->|read / update criteria| DB
+    I -->|PDFs + metadata| O
     O -->|1 extract| D
+    D -->|text| RT
     O -->|2 score| E
     E <-->|prompt / JSON| LLM
     O -->|3 validate| V
     O -->|4 score, benchmark, rank| K
-    O -->|5 persist| DB
+    O -->|5 persist results + chunks| DB
     O -->|result dict| L & S & R
+
+    Q -->|question| QA
+    QA -->|BM25 search| RT
+    RT <-->|chunks| DB
+    QA <-->|passages / cited answer| LLM
+
+    S -->|adjustment + reason| DB
+    X -->|decision + override reason| DB
+    AH -->|adjustments, decisions| DB
+    AH -->|re-rank| RV
+    RV --> K
+    AH -->|human_review view| L & R & X
 ```
+
+The LLM touches only two boxes: the Evaluation Agent judges one proposal at a time, and the Q&A Agent answers questions from retrieved passages. Everything that produces a score, a rank or a decision record is deterministic Python or an accountable human action.
 
 ### Ten-step data flow
 
@@ -130,8 +157,11 @@ flowchart TB
 | 6 | Score | `ranking_tool.py` | Absolute weighted score per supplier |
 | 7 | Benchmark | `ranking_tool.py` | Best score per criterion; gap and relative % per supplier |
 | 8 | Rank | `ranking_tool.py` | PPI; stable sort by tie-break order; ranks 1..N |
-| 9 | Persist | `database.py` | Write `supplier_results` and mark run `COMPLETED` |
+| 9 | Persist | `database.py` | Write `supplier_results` and `proposal_chunks`; mark run `COMPLETED` |
 | 10 | Present | `app.py` | Leaderboard, scorecards, run details, JSON download |
+| 11 | Ask (optional) | `qa_agent.py`, `retrieval_tool.py` | BM25 retrieval over stored chunks; LLM answers from those passages with supplier citations |
+| 12 | Review (optional) | `review_tool.py`, `app.py` | Reviewer adjusts scores with reasons; ranking recomputed and shown beside the LLM ranking |
+| 13 | Decide | `review_tool.py`, `database.py` | Reviewer records the award; non-recommended choice is an override with mandatory category and justification; versioned |
 
 ---
 
@@ -144,6 +174,10 @@ flowchart TB
 | **Evaluation Agent** | Score one supplier against the active criteria and cite evidence | LLM, JSON-only output | Compare suppliers, compute totals or ranks |
 | **Validation Tool** | Enforce schema; fill, clip, normalise; record warnings | Pydantic + custom Python | Change a valid score |
 | **Ranking Tool** | Formulas, benchmarks, PPI, tie-breaks, ranks | Deterministic Python, no I/O | Call the LLM |
+| **Retrieval Tool** | Chunk proposal text; BM25 search for the Q&A feature | Pure Python, no dependencies | Influence scores or ranks |
+| **Q&A Agent** | Answer a reviewer's question from retrieved passages, citing suppliers | LLM, plain-text output | Use knowledge outside the passages; change any score |
+| **Review Tool** | Validate reviewer adjustments and decisions; re-rank with adjusted scores | Deterministic Python, reuses the Ranking Tool | Overwrite an LLM score; accept an override without a reason |
+| **Human reviewer** | Adjust scores with reasons; record the award decision | Streamlit forms, named reviewer | Act anonymously; override without category and justification |
 
 Plain Python functions were chosen over an agent framework: the workflow is a fixed sequence, which keeps the orchestration readable, testable and trivially deployable.
 
